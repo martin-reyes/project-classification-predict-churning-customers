@@ -1,81 +1,157 @@
-# Chess Upsets
+<a name="top"></a>
+
+# Why Are Customers Churning
+
+by Martin Reyes
+
+<!-- <p>
+  <a href="https://github.com/martin-reyes" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/128/3291/3291695.png" alt="GitHub" width="40" height="40">
+  </a>
+
+  <a href="https://www.linkedin.com/in/martin-reyes-ds/" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/128/3536/3536505.png" alt="LinkedIn" width="40" height="40">
+    </a>
+</p>
+ -->
+
+## Project Description
+
+23% of current customers on record have churned. In this project, we will aim to find drivers in customer churn by  exploring data acquired on our MySQL database. We will explore features both individually and relative to customer churn status. We will take these insights, present them, and use them to create machine learning models to predict whether a customer churns. After evaluating the models with metrics that address our goals, we will use the models to come up with recommendations and predictions on churningn customers.
+
  
-# Project Description
+## Project Goal
  
-Chess is widely renowned as one of the most skill intensive games ever invented. Both sides begin the game with identical pieces in an identical position, there are no random elements (aside from assigning the first move), and the movement of those pieces during a game can result in over 121 million possible combinations in just the fist three moves. Because of this, the player with the most skill is likely to win the grand majority of chess games. I have decided to look into the different elements of a chess game to determine if any of them increase or decrease the chance of a player with lower skill defeating a player with greater skill.
+* Discover drivers of customers churning and other key insights.
+* Use main drivers to develop a machine learning model to predict churning customers.
+* Use insights and model evaluation to identify features to address when a customer is predicted to churn.
+
  
-# Project Goal
+## Initial Thoughts
  
-* Discover drivers of upsets in chess games played on Lichess.org
-* Use drivers to develop a machine learning model to classify games as ending in upset or not ending in upset
-* An upset is defined as a lower rated player defeating a higher rated player. 
-* This information could be used to further our understanding of which game elements contribute to or detract from a game’s skill intensity.
+My initial hypothesis is our demographic features, gender and senior citizen status, will not relate to churn while our numerical features (tenure, monthly charges, and total charges) will.
  
-# Initial Thoughts
+## The Plan
  
-My initial hypothesis is that drivers of upsets will be elements that either grant an outright advantage to one player or increase the likelihood of players making mistakes.
+* **Acquire** data from MYSQL
  
-# The Plan
- 
-* Aquire data from Kaggle
- 
-* Prepare data
-   * Create Engineered columns from existing data
-       * upset
-       * rating_difference
-       * game_rating
-       * lower_rated_white
-       * time_control_group
- 
-* Explore data in search of drivers of upsets
-   * Answer the following initial questions
-       * How often do upsets occur?
-       * Does first move advantage affect upsets?
-       * Does a game being rated affect upsets?
-       * Does the average rating of both players have an effect on upsets?
-       * Does time block affect upsets?
-       * Does a player's choice of opening affect upsets?
+* **Prepare** data. 
+    1. Inspect raw data and note any desired transformations which may include any of the following:
+        * Drop unnecessary columns (duplicate, redundant columns)
+        * Numeric columns should be numeric data types
+        * Handle missing values and impute appropriate values
+            * check for explicit missing values (e.g. `np.nan`)
+            * check for implicit missing values (e.g. whitespace, `'unknown'`, etc.)
+        * Deal with any duplicate rows
+        * Address and encode categorical columns
+            * one-hot encode unordered categorical columns
+            * label encode ordered categorical columns  
+    1. Inspect clean data
+        * Ensure data is tidy:
+            * one value per cell
+            * each observation is one and only one row
+            * each feature is one and only one column
+    1. Split the data
+        * Determine if target column has class imbalance. If, so stratify.
+        * We will do 70/15/15 train/validate/test split.
+        * **RANDOM_STATE will be 125**
+    1. Create data dictionary
+    1. Summarize data transformations
+
+* **Explore** data in search of features that drive churn
+   1. General Inspect
+       - `.info()` and `.describe()`
+       - identify continuous and categorical columns
+   1. Univariate Stats: 
+       - Categorical
+       - Nunerical
+   1. Bivariate Stats:
+       - Categorical features to target relationships
+       - Continuous features to target relationship
+   1. Use these quick insights to ask and answer specific questions:
+       - Which features appear to relate to churn the most?
       
-* Develop a Model to predict if a chess game will end in an upset
+* Develop a **model** to predict if a customer will churn
    * Use drivers identified in explore to build predictive models of different types
-   * Evaluate models on train and validate data
-   * Select the best model based on highest accuracy
-   * Evaluate the best model on test data
+   * Create and run a baseline model with `sklearn`'s `DummyClassifier` to compare our results to
+   * Create and run KNN, Logistic Regression, and Decistion Tree classification models
+   * Use the insights from the highest-performing model (with highest test accuracy) to confirm our initial hypotheses and insights on the features that are the biggest drivers of churn
+   
+* **Evaluate** models on train and validate data
+   * Identify the metric to maximize
+       * Do we simply want an accurate model?
+       * If not is it more costly to incorrectly identify non-churning customers (FN) or churning customers (FP)?
+   * Select the best model based on highest desired metric
+
+* Evaluate the best model on validation data set. After we find the best model, test on the test set.
+    * Save test predictions to a csv file
  
 * Draw conclusions
  
-# Data Dictionary
+ 
+<a name="data-dictionary"></a>
+## Data Dictionary
 
-| Feature | Definition |
-|:--------|:-----------|
-|Rated| True or False, The game's result is reflected in each player's rating|
-|Winning Pieces| The color of pieces the winning player was moving|
-|White Rating| Rating of the player moving the white pieces using the Glicko-2 rating method for games played on Lichess|
-|Black Rating| Rating of the player moving the white pieces using the Glicko-2 rating method for games played on Lichess|
-|Rating Difference| The difference in rating between the players in the game|
-|Game Rating| The average rating of the two players in the game|
-|Lower Rated White| True or False, The lower rated player is moving the white pieces|
-|Opening Name| The name of the opening played in the game|
-|Time Control Group| The amount of time allotted to each player to make their moves, **Standard** (60 min or more), **Rapid** (30 - 15 min), **Blitz** (5 - 3 min), or **Bullet** (2 or less), **Other** (any other time limit)|
-|Upset (Target)| True or False, The lower rated player won the game|
-|Additional Features|Encoded and values for categorical data and scaled versions continuous data|
+| Feature              | Definition |
+|:----------------------|:-------------------- |
+| customer_id          | Unique identifier for each customer |
+| gender_male          | Indicates whether the customer is male or not |
+| senior_citizen       | Indicates whether the customer is a senior citizen or not |
+| partner              | Indicates whether the customer has a partner or not |
+| dependents           | Indicates whether the customer has dependents or not |
+| tenure               | Number of months the customer has been with the company |
+| phone_service        | Indicates whether the customer has phone service or not |
+| multiple_lines       | Indicates whether the customer has multiple lines for phone |
+| online_security      | Indicates whether the customer has online security service or not |
+| online_backup        | Indicates whether the customer has online backup service or not |
+| device_protection | Indicates whether the customer has device protection service or not|
+| tech_support         | Indicates whether the customer has tech support service or not|
+| streaming_tv         | Indicates whether the customer has streaming TV service or not|
+| streaming_movies   | Indicates whether the customer has streaming movies service or not|
+| paperless_billing  | Indicates whether the customer has opted for paperless billing or not|
+| monthly_charges      | The amount charged to the customer on a monthly basis |
+| total_charges        | The total amount charged to the customer over the entire tenure |
+| churn (**target**)      | Indicates whether the customer has churned (cancelled the service) or not |
+| contract_type   | The type of contract the customer has (e.g., month-to-month, one-year, two-year)|
+| internet_service_type| The type of internet service the customer has (e.g., DSL, fiber optic, None) |
+| payment_type      | The method of payment used by the customer (e.g., electronic check, credit card, bank transfer, mailed check) |
+|Additional Features|Encoded and values for categorical data|
+
  
-# Steps to Reproduce
-1) Clone this repo.
-2) Acquire the data from [Kaggle](https://www.kaggle.com/datasnaek/chess)
-3) Put the data in the file containing the cloned repo.
-4) Run notebook.
+## Steps to Reproduce
+1. Clone this repo.
+2. To acquire data, ensure env.py file is in local repo with MySQL credentials, or [telco_churn_raw.csv](data/telco_churn_raw.csv) is in the data folder.
+3. Run through notebooks to produce results.
  
-# Takeaways and Conclusions
-* Upsets occur in 1/3 of games
-* In games where the lower rated player moves first there is a 4% greater chance of an upset
-* Games that are rated have a 3% higher chance of an upset
-* Games with a "quick" time control (30 min or less) have about a 1 in 3 chance of upset
-* Games with a "slow" time control (60 min or more) have about a 1 in 5 chance of upset
-* The mean rating of players in a game is not a driver of upsets
-* The difference in player rating is a driver of upsets
-* A player's choice of opening is a driver of upsets, however its influence is complicated and I would need more time to discover what role it plays
- 
-# Recommendations
-* To increase the skill intensity of a game add to the length of time players are able to consider their moves
-* Based on the data longer time controls make it less likely for a less skilled player to beat a more skilled player
+## Summary
+Key Insights:
+- Strong Drivers of Churn:
+    - Tenure
+        - Churners have a shorter tenure
+    - Internet Service Type
+        - Churners largely have fiber optic internet
+    - Contract Type
+        - Churners are largely on month-to-month contracts
+        - Churners are rarely on twy-year contracts
+    - Payment by Electronic Check
+        - Churners typically pay by electronic check
+        
+We were able to outperform our baseline accuracy of 73% by fitting a logistic regression classifier and getting an 80.5% accuracy.
+
+
+## Recommendations
+* With most churning customers leaving in the first few months, we should take action early to prevent churn.
+    * We can take low-cost actions like reaching out and offering a survey of customer satisfaction.
+    * We can consider higher-investment actions like offering promotions or early discounts
+* Take similar action to encourage customers to go on a one or two year contract rather than month-to-month.
+* We should see why those with fiber-optic cable churn more than others.
+    * Is this cost related? (look into monthly charges) 
+    * How does out fiber-optic cable perform?
+
+## Next Steps
+With more time, we can:
+- Do Multivariate analysis and see how a combination or columns relate to churn 
+- Develop a better-performing model by feature engineering, feature scaling, running other ML classifiers, etc.
+- If we want to take action with any of the recommendations, we can change our performance metric to precision or recall, and predict and target customers this way.
+
+[Back to top](#top)

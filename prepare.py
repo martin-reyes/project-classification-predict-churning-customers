@@ -25,52 +25,124 @@ def identify_cols_with_white_space(df):
                 cols_w_white_space.append(col)
     return cols_w_white_space
 
-
-def prep_telco(telco_raw=a.get_telco_data()):
+def prep_telco_explore(telco_raw=a.get_telco_data(), target='churn'):
     '''
     Accepts the raw telco data
     Returns the data with the transformations above applied
     '''
-    filename = "data/telco_churn_prep.csv"
+    # drop foreign keys
+    telco = telco_raw.iloc[:,3:]
+
+    # replace empty space with np.nan and convert column to float
+    telco['total_charges'] = telco['total_charges'].replace(' ', np.nan).astype(float)
+    # impute median
+    telco['total_charges'] = telco['total_charges'].fillna(telco['total_charges'].median())
+
+    # decode senior column
+    telco['senior_citizen'] = telco['senior_citizen'].replace({1: 'Senior', 0: 'Non-Senior'})
+
+    # encode multiclass variables and target column
+    telco[target] = telco[target].replace({'Yes': 1, 'No': 0})
+    dummy_df = pd.get_dummies(telco[[col for col in telco.columns
+                                     if (telco[col].nunique() > 2 and telco[col].nunique() < 10)]])
+    dummy_df = dummy_df.replace({0: 'No', 1: 'Yes'})
+    telco_explore = pd.concat([telco, dummy_df], axis=1)
+
+    # rename columns to be lowercased with underscores
+    telco_explore.columns = [col.lower().replace(" ", "_") for col in telco_explore.columns]
+
+    # Write the clean DataFrame for exploration and modeling
+    filename = "data/telco_churn_explore.csv"
+    telco_explore.to_csv(filename, index=False)    
+
+    return telco_explore
+
+def prep_telco_model(telco_raw=a.get_telco_data()):
+    '''
+    Accepts the raw telco data
+    Returns the data with the transformations above applied
+    '''
     
-    # read and return prepped_data if file exists
-    if os.path.isfile(filename):
-        return pd.read_csv(filename)
+    # drop foreign keys
+    telco = telco_raw.iloc[:,3:]
+
+    # replace empty space with np.nan and convert column to float
+    telco['total_charges'] = telco['total_charges'].replace(' ', np.nan).astype(float)
+    # impute median
+    telco['total_charges'] = telco['total_charges'].fillna(telco['total_charges'].median())
+
+    # encode binary variables
+    binary_cols = ['partner','dependents','phone_service', 'paperless_billing', 'churn']
+    for col in binary_cols:
+        telco[col] = telco[col].replace({'Yes': 1, 'No': 0})
+
+    telco['gender'] = telco['gender'].replace({'Male': 1, 'Female': 0})
+
+    # encode multiclass
+    multiclass_cols = [col for col in telco.columns
+                       if (telco[col].nunique() > 2 and telco[col].nunique() < 10)]
+    dummy_df = pd.get_dummies(telco[multiclass_cols], drop_first=True)
+    telco_model = pd.concat([telco, dummy_df], axis=1)
     
-    else:
-        # drop foreign keys
-        telco = telco_raw.iloc[:,3:]
+    # drop multiclass columns
+    telco_model = telco_model.drop(columns=multiclass_cols)
 
-        # replace empty space with np.nan and convert column to float
-        telco['total_charges'] = telco['total_charges'].replace(' ', np.nan).astype(float)
-        # impute median
-        telco['total_charges'] = telco['total_charges'].fillna(telco['total_charges'].median())
+    # rename columns to be lowercased with underscores
+    telco_model.columns = [col.lower().replace(" ", "_") for col in telco_model.columns]
+    # rename gender column to gender_male
+    telco_model = telco_model.rename(columns={'gender':'gender_male'})
 
-        # encode binary variables
-        binary_cols = ['partner','dependents','phone_service', 'paperless_billing', 'churn']
-        for col in binary_cols:
-            telco[col] = telco[col].replace({'Yes': 1, 'No': 0})
+    # Write the clean DataFrame for exploration and modeling
+    filename = "data/telco_churn_model.csv"
+    telco_model.to_csv(filename, index=False)    
 
-        telco['gender'] = telco['gender'].replace({'Male': 1, 'Female': 0})
+    return telco_model
 
-        # encode multiclass variables
-        dummy_df = pd.get_dummies(telco[['multiple_lines', 'online_security',
-                                               'online_backup', 'device_protection', 
-                                               'tech_support', 'streaming_tv', 
-                                               'streaming_movies', 'contract_type',
-                                               'internet_service_type', 'payment_type']],
-                                    dummy_na=False, drop_first=True)
-        telco_clean = pd.concat([telco, dummy_df], axis=1)
+# def prep_telco(telco_raw=a.get_telco_data()):
+#     '''
+#     Accepts the raw telco data
+#     Returns the data with the transformations above applied
+#     '''
+#     filename = "data/telco_churn_prep.csv"
+    
+#     # read and return prepped_data if file exists
+#     if os.path.isfile(filename):
+#         return pd.read_csv(filename)
+    
+#     else:
+#         # drop foreign keys
+#         telco = telco_raw.iloc[:,3:]
 
-        # rename columns to be lowercased with underscores
-        telco_clean.columns = [col.lower().replace(" ", "_") for col in telco_clean.columns]
-        # rename gender column to gender_male
-        telco_clean = telco_clean.rename(columns={'gender':'gender_male'})
+#         # replace empty space with np.nan and convert column to float
+#         telco['total_charges'] = telco['total_charges'].replace(' ', np.nan).astype(float)
+#         # impute median
+#         telco['total_charges'] = telco['total_charges'].fillna(telco['total_charges'].median())
+
+#         # encode binary variables
+#         binary_cols = ['partner','dependents','phone_service', 'paperless_billing', 'churn']
+#         for col in binary_cols:
+#             telco[col] = telco[col].replace({'Yes': 1, 'No': 0})
+
+#         telco['gender'] = telco['gender'].replace({'Male': 1, 'Female': 0})
+
+#         # encode multiclass variables
+#         dummy_df = pd.get_dummies(telco[['multiple_lines', 'online_security',
+#                                                'online_backup', 'device_protection', 
+#                                                'tech_support', 'streaming_tv', 
+#                                                'streaming_movies', 'contract_type',
+#                                                'internet_service_type', 'payment_type']],
+#                                     dummy_na=False, drop_first=True)
+#         telco_clean = pd.concat([telco, dummy_df], axis=1)
+
+#         # rename columns to be lowercased with underscores
+#         telco_clean.columns = [col.lower().replace(" ", "_") for col in telco_clean.columns]
+#         # rename gender column to gender_male
+#         telco_clean = telco_clean.rename(columns={'gender':'gender_male'})
         
-        # Write the clean DataFrame for exploration and modeling
-        telco_clean.to_csv(filename, index=False)    
+#         # Write the clean DataFrame for exploration and modeling
+#         telco_clean.to_csv(filename, index=False)    
         
-        return telco_clean
+#         return telco_clean
 
 
 def split_data(df, test_size=.15, validate_size=.15, stratify_col=None, random_state=None):

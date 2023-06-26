@@ -3,9 +3,18 @@ import env
 import os
 
 def get_connection(db, user=env.user, host=env.host, password=env.pwd):
+    '''
+    env.py file must hold 3 variables that hold MySQL credentials: user, host, and pwd
+    Returns string of the MySQL connection required for pandas read_sql method
+    '''
     return f'mysql+pymysql://{user}:{password}@{host}/{db}'
 
 def get_telco_data():
+    '''
+    If the csv file exists, it is read and returned as a pandas DataFrame
+    If not, pandas reads in a SQL query that acquires telco customer data from a MySQL database.
+    The query is stored into a DataFrame, saved, and returned.
+    '''
     filename = "data/telco_churn_raw.csv"
 
     # Read the csv file if it exists
